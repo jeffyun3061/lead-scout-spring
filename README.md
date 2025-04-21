@@ -91,6 +91,7 @@ strengths, competitors, target_customers 등 분석 데이터 | 각 PDF에 대�
 
 ## 📦 디렉토리 구조
 📦 src/main/java/com/leadscout/backend
+
 ├── 📁 controller       # API 엔드포인트 (REST 컨트롤러)
 
 ├── 📁 domain           # Entity 클래스 (JPA 테이블 매핑)
