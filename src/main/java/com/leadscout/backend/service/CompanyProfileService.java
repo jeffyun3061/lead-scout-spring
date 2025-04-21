@@ -1,7 +1,9 @@
 package com.leadscout.backend.service;
 
+import com.leadscout.backend.domain.CompanyData;
 import com.leadscout.backend.domain.CompanyProfile;
 import com.leadscout.backend.dto.CompanyProfileDto;
+import com.leadscout.backend.repository.CompanyDataRepository;
 import com.leadscout.backend.repository.CompanyProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,49 +14,52 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CompanyProfileService {
 
-    private final CompanyProfileRepository repository;
+    private final CompanyProfileRepository profileRepo;
+    private final CompanyDataRepository dataRepo;
 
     public CompanyProfile create(CompanyProfileDto dto) {
-        CompanyProfile entity = CompanyProfile.builder()
-                .companyName(dto.getCompanyName())
-                .industry(dto.getIndustry())
-                .homepage(dto.getHomepage())
-                .keyExecutive(dto.getKeyExecutive())
-                .address(dto.getAddress())
-                .email(dto.getEmail())
-                .phoneNumber(dto.getPhoneNumber())
-                .description(dto.getDescription())
-                .pdfUrl(dto.getPdfUrl())
+        CompanyData companyData = dataRepo.findById(dto.getCompanyId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 기업이 존재하지 않습니다: " + dto.getCompanyId()));
+
+        CompanyProfile profile = CompanyProfile.builder()
+                .fileName(dto.getFileName())
+                .url(dto.getUrl())
+                .companyData(companyData)
                 .build();
 
-        return repository.save(entity);
+        return profileRepo.save(profile);
     }
 
     public List<CompanyProfile> findAll() {
-        return repository.findAll();
+        return profileRepo.findAll();
     }
 
     public CompanyProfile findById(Long id) {
-        return repository.findById(id).orElseThrow();
+        return profileRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 프로필이 존재하지 않습니다: " + id));
+    }
+
+    public List<CompanyProfile> findByCompanyId(Long companyId) {
+        return profileRepo.findByCompanyDataId(companyId);
     }
 
     public CompanyProfile update(Long id, CompanyProfileDto dto) {
-        CompanyProfile entity = repository.findById(id).orElseThrow();
+        CompanyProfile profile = findById(id);
 
-        entity.setCompanyName(dto.getCompanyName());
-        entity.setIndustry(dto.getIndustry());
-        entity.setHomepage(dto.getHomepage());
-        entity.setKeyExecutive(dto.getKeyExecutive());
-        entity.setAddress(dto.getAddress());
-        entity.setEmail(dto.getEmail());
-        entity.setPhoneNumber(dto.getPhoneNumber());
-        entity.setDescription(dto.getDescription());
-        entity.setPdfUrl(dto.getPdfUrl());
+        profile.setFileName(dto.getFileName());
+        profile.setUrl(dto.getUrl());
 
-        return repository.save(entity);
+        // 회사 변경은 잘 안 하겠지만 혹시 모를 케이스 대비
+        if (!profile.getCompanyData().getId().equals(dto.getCompanyId())) {
+            CompanyData newCompany = dataRepo.findById(dto.getCompanyId())
+                    .orElseThrow(() -> new IllegalArgumentException("기업 없음: " + dto.getCompanyId()));
+            profile.setCompanyData(newCompany);
+        }
+
+        return profileRepo.save(profile);
     }
 
     public void delete(Long id) {
-        repository.deleteById(id);
+        profileRepo.deleteById(id);
     }
 }
