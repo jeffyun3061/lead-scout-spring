@@ -3,12 +3,13 @@ package com.leadscout.backend.controller;
 import com.leadscout.backend.service.S3Uploader;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +23,10 @@ import java.io.IOException;
 @Tag(name = "file-upload-controller", description = "파일 업로드 API (PDF 업로드용)")
 @RestController
 @RequestMapping("/api/files")
+@RequiredArgsConstructor
 public class FileUploadController {
 
     private final S3Uploader s3Uploader;
-
-    @Autowired
-    public FileUploadController(S3Uploader s3Uploader) {
-        this.s3Uploader = s3Uploader;
-    }
 
     @Operation(
             summary = "PDF 파일 업로드",
@@ -41,19 +38,19 @@ public class FileUploadController {
                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                             schema = @Schema(type = "string", format = "binary")
                     )
-            ),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "업로드 성공"),
-                    @ApiResponse(responseCode = "400", description = "파일 누락 또는 유효하지 않음"),
-                    @ApiResponse(responseCode = "500", description = "서버 내부 오류")
-            }
+            )
     )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "업로드 성공"),
+            @ApiResponse(responseCode = "400", description = "파일 누락 또는 유효하지 않음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadFile(
             @Parameter(description = "업로드할 PDF 파일", required = true)
-            @RequestPart("file") MultipartFile file
+            @RequestParam("file") MultipartFile file
     ) {
-        if (file.isEmpty()) {
+        if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body("파일이 없습니다.");
         }
 
@@ -63,10 +60,12 @@ public class FileUploadController {
             String uploadedUrl = s3Uploader.uploadFile(convertedFile, file.getOriginalFilename());
             return ResponseEntity.ok(uploadedUrl);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("업로드 실패: " + e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("업로드 실패: " + e.getMessage());
         } finally {
             if (convertedFile != null && convertedFile.exists()) {
-                convertedFile.delete();
+                convertedFile.delete(); // 임시 파일 정리
             }
         }
     }
