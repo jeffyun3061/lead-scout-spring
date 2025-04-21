@@ -92,14 +92,23 @@ strengths, competitors, target_customers 등 분석 데이터 | 각 PDF에 대�
 ## 📦 디렉토리 구조
 📦 src/main/java/com/leadscout/backend
 ├── 📁 controller       # API 엔드포인트 (REST 컨트롤러)
+
 ├── 📁 domain           # Entity 클래스 (JPA 테이블 매핑)
+
 ├── 📁 dto              # 요청/응답 데이터 전송 객체
+
 ├── 📁 repository       # JPA Repository 인터페이스
+
 ├── 📁 service          # 비즈니스 로직 처리
+
 ├── 📁 config           # 설정 클래스 (예: S3, Swagger 등)
+
 📦 src/main/resources
+
 ├── 📄 application.yml  # DB/S3 설정 파일
+
 ├── 📁 static           # 정적 리소스 (프론트엔드 사용 시)
+
 ├── 📁 templates        # 템플릿
 
 
